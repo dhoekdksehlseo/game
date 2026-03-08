@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>에덴 EDEN</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600&family=Noto+Sans+KR:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0c;
+    --bg2: #111115;
+    --cream: #e8e0d0;
+    --red: #8b1a1a;
+    --red2: #c0392b;
+    --gold: #b8954a;
+    --dim: rgba(0,0,0,0.85);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 300;
+    height: 100vh;
+    overflow: hidden;
+    cursor: default;
+    user-select: none;
+  }
+
+  /* ── TITLE SCREEN ── */
+  #title-screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #050507;
+    z-index: 100;
+    transition: opacity 1.5s;
+  }
+  #title-screen.fade-out { opacity: 0; pointer-events: none; }
+
+  .title-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 60%, rgba(139,26,26,0.12) 0%, transparent 70%),
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.015) 40px);
+  }
+  .title-grain {
+    position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+
+  .title-deco {
+    width: 1px; height: 80px;
+    background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+    margin-bottom: 32px;
+    animation: pulse-line 3s ease-in-out infinite;
+  }
+  @keyframes pulse-line {
+    0%,100% { opacity:0.4; transform: scaleY(0.8); }
+    50% { opacity:1; transform: scaleY(1); }
+  }
+
+  .title-main {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(48px, 8vw, 88px);
+    font-weight: 300;
+    letter-spacing: 0.35em;
+    color: var(--cream);
+    text-shadow: 0 0 60px rgba(139,26,26,0.5);
+    animation: title-appear 2s ease forwards;
+    opacity: 0;
+  }
+  @keyframes title-appear {
+    from { opacity:0; letter-spacing: 0.5em; }
+    to { opacity:1; letter-spacing: 0.35em; }
+  }
+
+  .title-sub {
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--gold);
+    opacity: 0.7;
+    margin-top: 14px;
+    animation: fade-in-delay 2s 1s ease forwards;
+    opacity: 0;
+  }
+  @keyframes fade-in-delay {
+    from { opacity:0; }
+    to { opacity:0.7; }
+  }
+
+  .title-tagline {
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    color: rgba(232,224,208,0.35);
+    margin-top: 8px;
+    animation: fade-in-delay 2s 1.5s ease forwards;
+    opacity: 0;
+  }
+
+  .title-btn {
+    margin-top: 64px;
+    padding: 14px 48px;
+    border: 1px solid rgba(184,149,74,0.4);
+    background: transparent;
+    color: var(--cream);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    cursor: pointer;
+    transition: all 0.4s;
+    animation: fade-in-delay 2s 2s ease forwards;
+    opacity: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .title-btn::before {
+    content:''; position:absolute; inset:0;
+    background: rgba(139,26,26,0.0);
+    transition: background 0.4s;
+  }
+  .title-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .title-btn:hover::before { background: rgba(139,26,26,0.15); }
+
+  /* ── GAME SCREEN ── */
+  #game-screen {
+    position: fixed; inset: 0;
+    display: none;
+    flex-direction: column;
+  }
+  #game-screen.active { display: flex; }
+
+  /* Scene / Background */
+  #scene {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #0a0a0c;
+  }
+
+  .scene-bg {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    transition: opacity 0.8s;
+  }
+
+  /* SVG Room backgrounds */
+  .bg-teresa-room {
+    background:
+      linear-gradient(180deg, #1a1008 0%, #2d1e0e 30%, #3d2a14 60%, #1e1208 100%);
+  }
+  .bg-teresa-room::before {
+    content:''; position:absolute; inset:0;
+    background:
+      /* floor */
+      linear-gradient(0deg, #0d0906 0%, transparent 35%),
+      /* window light */
+      radial-gradient(ellipse 30% 60% at 75% 20%, rgba(180,140,80,0.08) 0%, transparent 70%),
+      /* wall texture */
+      repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255,255,255,0.012) 60px);
+  }
+
+  .bg-teresa-hallway {
+    background: linear-gradient(180deg, #15100a 0%, #241808 35%, #1a1208 70%, #0d0906 100%);
+  }
+  .bg-teresa-hallway::before {
+    content:''; position:absolute; inset:0;
+    background:
+      linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 30%),
+      radial-gradient(ellipse 15% 80% at 50% 50%, rgba(180,140,60,0.06) 0%, transparent 100%),
+      repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(255,255,255,0.01) 80px);
+  }
+
+  .bg-teresa-desk {
+    background: linear-gradient(180deg, #1a1008 0%, #2d1e0e 40%, #3d2a14 70%, #1e1208 100%);
+  }
+
+  .bg-eva-home {
+    background: linear-gradient(180deg, #0f1520 0%, #1a2030 40%, #141a28 70%, #0a0f18 100%);
+  }
+  .bg-eva-home::before {
+    content:''; position:absolute; inset:0;
+    background:
+      radial-gradient(ellipse 40% 30% at 50% 0%, rgba(100,130,180,0.08) 0%, transparent 60%),
+      linear-gradient(0deg, rgba(0,0,0,0.4) 0%, transparent 40%);
+  }
+  .bg-teresa-kitchen {
+    background: linear-gradient(180deg, #1c1408 0%, #130e06 60%, #0e0904 100%);
+  }
+  .bg-teresa-kitchen::before {
+    content:''; position:absolute; inset:0;
+    background:
+      linear-gradient(0deg, rgba(0,0,0,0.5) 0%, transparent 40%),
+      radial-gradient(ellipse 30% 50% at 85% 35%, rgba(160,180,200,0.04) 0%, transparent 60%);
+  }
+
+  /* Atmospheric overlay */
+  .scene-vignette {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 80% 80% at 50% 50%, transparent 30%, rgba(0,0,0,0.6) 100%);
+    z-index: 2;
+  }
+
+  /* Rendered room objects */
+  .room-objects {
+    position: absolute; inset: 0; z-index: 3;
+    /* nav 버튼 영역(가장자리/하단)은 pointer-events 안 받도록 margin */
+  }
+
+  /* Clickable hotspot */
+  .hotspot {
+    position: absolute;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 4;
+  }
+  .hotspot::after {
+    content: attr(data-label);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10,10,12,0.9);
+    border: 1px solid rgba(184,149,74,0.3);
+    color: var(--gold);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    padding: 4px 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .hotspot:hover::after { opacity: 1; }
+  .hotspot:hover .hotspot-inner { border-color: var(--gold); box-shadow: 0 0 12px rgba(184,149,74,0.4); }
+
+  .hotspot-inner {
+    width: 100%; height: 100%;
+    border: 1px solid rgba(184,149,74,0.2);
+    border-radius: 2px;
+    transition: all 0.2s;
+    animation: pulse-hot 3s ease-in-out infinite;
+  }
+  @keyframes pulse-hot {
+    0%,100% { border-color: rgba(184,149,74,0.2); }
+    50% { border-color: rgba(184,149,74,0.45); }
+  }
+
+  /* SVG room art */
+  #room-art {
+    position: absolute; inset: 0; z-index: 1;
+  }
+
+  /* Navigation arrows */
+  #nav-arrows {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    bottom: 110px;
+    z-index: 500;
+    pointer-events: none;
+  }
+
+  .nav-btn {
+    position: absolute;
+    pointer-events: all;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+    opacity: 0.6;
+    background: none;
+    border: none;
+    padding: 16px;
+  }
+  .nav-btn:hover { opacity: 1; }
+  .nav-btn.hidden { display: none; }
+
+  .nav-btn svg { transition: transform 0.2s; }
+  .nav-btn:hover svg { transform: scale(1.2); }
+
+  .nav-forward {
+    bottom: 18%; left: 50%; transform: translateX(-50%);
+  }
+  .nav-left {
+    left: 2%; top: 50%; transform: translateY(-50%);
+  }
+  .nav-right {
+    right: 2%; top: 50%; transform: translateY(-50%);
+  }
+  .nav-back {
+    bottom: 2%; left: 50%; transform: translateX(-50%);
+  }
+
+  /* ── BOTTOM UI BAR ── */
+  #ui-bar {
+    height: 110px;
+    background: linear-gradient(0deg, #050507 0%, #0a0a0e 100%);
+    border-top: 1px solid rgba(184,149,74,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    position: relative;
+    z-index: 20;
+  }
+
+  /* Quick slots */
+  .inv-slot {
+    width: 72px; height: 72px;
+    border: 1px solid rgba(184,149,74,0.2);
+    background: rgba(255,255,255,0.02);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .inv-slot:hover { border-color: rgba(184,149,74,0.5); background: rgba(184,149,74,0.05); }
+  .inv-slot.has-item { border-color: rgba(184,149,74,0.35); }
+  .inv-slot .item-icon { font-size: 22px; }
+  .inv-slot .item-name { font-size: 8px; letter-spacing: 0.1em; color: rgba(232,224,208,0.5); margin-top: 4px; }
+  .inv-slot .item-count {
+    position: absolute; top: 4px; right: 4px;
+    font-size: 9px; color: var(--gold);
+  }
+
+  .inv-divider {
+    width: 1px; height: 60px;
+    background: rgba(184,149,74,0.15);
+    flex-shrink: 0;
+  }
+
+  /* Status */
+  #status-area {
+    flex: 1;
+    padding: 0 16px;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 6px;
+  }
+
+  .status-scene {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    opacity: 0.7;
+  }
+  .status-collect {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: rgba(232,224,208,0.4);
+  }
+  .collect-bar {
+    width: 120px; height: 2px;
+    background: rgba(255,255,255,0.08);
+    margin-top: 4px;
+    position: relative;
+  }
+  .collect-bar-fill {
+    height: 100%;
+    background: var(--gold);
+    transition: width 0.6s ease;
+  }
+
+  /* UI buttons */
+  .ui-btn {
+    width: 72px; height: 72px;
+    border: 1px solid rgba(184,149,74,0.2);
+    background: transparent;
+    color: var(--cream);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px;
+    flex-shrink: 0;
+  }
+  .ui-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(184,149,74,0.05); }
+  .ui-btn .btn-icon { font-size: 20px; }
+
+  /* ── DIALOG ── */
+  #dialog-overlay {
+    position: fixed; inset: 0;
+    z-index: 50;
+    pointer-events: none;
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding: 0 0 130px 0;
+  }
+  #dialog-box {
+    margin: 0 40px;
+    background: rgba(5,5,7,0.95);
+    border: 1px solid rgba(184,149,74,0.25);
+    border-bottom: 2px solid rgba(184,149,74,0.4);
+    padding: 24px 28px;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: all 0.4s;
+    pointer-events: all;
+    max-height: 200px;
+  }
+  #dialog-box.active {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  .dialog-speaker {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+  .dialog-text {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--cream);
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 300;
+  }
+  .dialog-continue {
+    text-align: right;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: rgba(184,149,74,0.5);
+    margin-top: 12px;
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:0.3} 50%{opacity:1} }
+
+  /* ── ITEM INSPECT ── */
+  #inspect-overlay {
+    position: fixed; inset: 0; z-index: 60;
+    background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  #inspect-overlay.active { display: flex; }
+  #inspect-box {
+    background: var(--bg2);
+    border: 1px solid rgba(184,149,74,0.3);
+    padding: 40px;
+    max-width: 420px; width: 90%;
+    text-align: center;
+    position: relative;
+  }
+  .inspect-icon { font-size: 48px; margin-bottom: 20px; }
+  .inspect-name {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 18px; font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    margin-bottom: 16px;
+  }
+  .inspect-desc {
+    font-size: 13px; line-height: 1.9;
+    color: rgba(232,224,208,0.75);
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 300;
+  }
+  .inspect-acquire {
+    margin-top: 24px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: rgba(184,149,74,0.6);
+  }
+  .inspect-close {
+    position: absolute; top: 12px; right: 16px;
+    background: none; border: none; color: rgba(232,224,208,0.4);
+    font-size: 18px; cursor: pointer;
+    transition: color 0.2s;
+  }
+  .inspect-close:hover { color: var(--cream); }
+  #inspect-overlay .btn-get {
+    margin-top: 20px;
+    padding: 10px 32px;
+    border: 1px solid rgba(184,149,74,0.4);
+    background: transparent;
+    color: var(--gold);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  #inspect-overlay .btn-get:hover { background: rgba(184,149,74,0.1); }
+
+  /* ── NOTEBOOK ── */
+  #notebook-overlay {
+    position: fixed; inset: 0; z-index: 60;
+    background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  #notebook-overlay.active { display: flex; }
+  #notebook-box {
+    background: #0e0c09;
+    border: 1px solid rgba(184,149,74,0.25);
+    width: min(680px, 92vw);
+    height: min(500px, 85vh);
+    display: flex;
+    position: relative;
+    overflow: hidden;
+  }
+  .nb-tabs {
+    width: 80px;
+    border-right: 1px solid rgba(184,149,74,0.15);
+    display: flex; flex-direction: column;
+    padding: 16px 0;
+    gap: 4px;
+  }
+  .nb-tab {
+    padding: 12px 8px;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: rgba(232,224,208,0.4);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    border-left: 2px solid transparent;
+  }
+  .nb-tab.active { color: var(--gold); border-left-color: var(--gold); background: rgba(184,149,74,0.05); }
+  .nb-tab:hover { color: var(--cream); }
+  .nb-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+  }
+  .nb-content::-webkit-scrollbar { width: 4px; }
+  .nb-content::-webkit-scrollbar-track { background: transparent; }
+  .nb-content::-webkit-scrollbar-thumb { background: rgba(184,149,74,0.3); }
+  .nb-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 14px; font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(184,149,74,0.15);
+  }
+  .nb-entry {
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .nb-entry-title {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: rgba(184,149,74,0.8);
+    margin-bottom: 8px;
+  }
+  .nb-entry-text {
+    font-size: 12px;
+    line-height: 1.9;
+    color: rgba(232,224,208,0.65);
+    font-family: 'Noto Serif KR', serif;
+    font-weight: 300;
+  }
+  .nb-empty { font-size: 12px; color: rgba(232,224,208,0.25); letter-spacing: 0.1em; }
+  .nb-close {
+    position: absolute; top: 12px; right: 16px;
+    background: none; border: none; color: rgba(232,224,208,0.4);
+    font-size: 18px; cursor: pointer; transition: color 0.2s;
+  }
+  .nb-close:hover { color: var(--cream); }
+
+  /* ── SCREEN TRANSITION ── */
+  #transition-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s;
+  }
+  #transition-overlay.fade-in { opacity: 1; pointer-events: all; }
+
+  /* ── NARRATION SCREEN ── */
+  #narration-screen {
+    position: fixed; inset: 0; z-index: 150;
+    background: #000;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+  }
+  #narration-screen.active { display: flex; }
+  .narration-text {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(14px, 2vw, 18px);
+    font-weight: 300;
+    color: var(--cream);
+    text-align: center;
+    line-height: 2.2;
+    max-width: 560px;
+    padding: 0 32px;
+    opacity: 0;
+    transition: opacity 1.2s;
+  }
+  .narration-text.visible { opacity: 1; }
+  .narration-continue {
+    margin-top: 48px;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: rgba(184,149,74,0.5);
+    animation: blink 2s ease-in-out infinite;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 1s 1s;
+  }
+  .narration-continue.visible { opacity: 1; }
+
+  /* ── COMBO HINT ── */
+  #combo-hint {
+    position: fixed; top: 24px; right: 24px; z-index: 80;
+    background: rgba(5,5,7,0.9);
+    border: 1px solid rgba(139,26,26,0.5);
+    padding: 12px 20px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: rgba(232,224,208,0.7);
+    transform: translateX(120%);
+    transition: transform 0.5s;
+    max-width: 260px;
+    line-height: 1.7;
+  }
+  #combo-hint.show { transform: translateX(0); }
+  #combo-hint strong { color: var(--gold); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-60px);
+    z-index: 90;
+    background: rgba(10,10,12,0.95);
+    border: 1px solid rgba(184,149,74,0.3);
+    padding: 10px 24px;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    transition: transform 0.4s;
+    white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Progress indicator */
+  #progress-bar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 85; height: 2px;
+    background: transparent;
+  }
+  #progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--red) 0%, var(--gold) 100%);
+    width: 0%;
+    transition: width 0.8s ease;
+  }
+
+  /* Cursor dot */
+  .cursor-dot {
+    position: fixed; z-index: 300;
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: transform 0.1s, opacity 0.2s;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: difference;
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor-dot" id="cursor"></div>
+<div id="transition-overlay"></div>
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<!-- TITLE -->
+<div id="title-screen">
+  <div class="title-bg"></div>
+  <div class="title-grain"></div>
+  <div class="title-deco"></div>
+  <div class="title-main">에덴</div>
+  <div class="title-sub">E D E N</div>
+  <div class="title-tagline">사이비 종교 심리 스릴러</div>
+  <button class="title-btn" onclick="startGame()">새 게임 시작</button>
+</div>
+
+<!-- NARRATION -->
+<div id="narration-screen">
+  <div class="narration-text" id="narration-text"></div>
+  <div class="narration-continue" id="narration-continue" onclick="nextNarration()">[ 클릭하여 계속 ]</div>
+</div>
+
+<!-- NAV (game-screen 바깥, body 직속 fixed — hotspot에 절대 안 막힘) -->
+<div id="nav-arrows" style="display:none">
+  <button class="nav-btn nav-forward hidden" id="nav-forward" onclick="navigate('forward')">
+    <svg width="40" height="40" viewBox="0 0 40 40"><polygon points="20,4 36,32 4,32" fill="none" stroke="#b8954a" stroke-width="1.5"/></svg>
+  </button>
+  <button class="nav-btn nav-left hidden" id="nav-left" onclick="navigate('left')">
+    <svg width="32" height="32" viewBox="0 0 32 32"><polyline points="22,4 10,16 22,28" fill="none" stroke="#b8954a" stroke-width="1.5"/></svg>
+  </button>
+  <button class="nav-btn nav-right hidden" id="nav-right" onclick="navigate('right')">
+    <svg width="32" height="32" viewBox="0 0 32 32"><polyline points="10,4 22,16 10,28" fill="none" stroke="#b8954a" stroke-width="1.5"/></svg>
+  </button>
+  <button class="nav-btn nav-back hidden" id="nav-back" onclick="navigate('back')">
+    <svg width="32" height="32" viewBox="0 0 32 32"><polygon points="16,28 32,8 0,8" fill="none" stroke="#b8954a" stroke-width="1.5"/></svg>
+  </button>
+</div>
+
+<!-- GAME -->
+<div id="game-screen">
+  <div id="scene">
+    <div id="room-art" class="scene-bg"></div>
+    <div class="scene-vignette"></div>
+    <div class="room-objects" id="room-objects"></div>
+  </div>
+
+  <!-- UI BAR -->
+  <div id="ui-bar">
+    <div class="inv-slot" id="slot-0" onclick="inspectSlot(0)" title="빈 슬롯">
+      <div class="item-icon" id="slot-0-icon">·</div>
+      <div class="item-name" id="slot-0-name"></div>
+    </div>
+    <div class="inv-slot" id="slot-1" onclick="inspectSlot(1)">
+      <div class="item-icon" id="slot-1-icon">·</div>
+      <div class="item-name" id="slot-1-name"></div>
+    </div>
+    <div class="inv-slot" id="slot-2" onclick="inspectSlot(2)">
+      <div class="item-icon" id="slot-2-icon">·</div>
+      <div class="item-name" id="slot-2-name"></div>
+    </div>
+    <div class="inv-slot" id="slot-3" onclick="inspectSlot(3)">
+      <div class="item-icon" id="slot-3-icon">·</div>
+      <div class="item-name" id="slot-3-name"></div>
+    </div>
+    <div class="inv-divider"></div>
+    <div id="status-area">
+      <div class="status-scene" id="status-scene">─</div>
+      <div class="status-collect" id="status-collect">수집률 0%</div>
+      <div class="collect-bar"><div class="collect-bar-fill" id="collect-fill" style="width:0%"></div></div>
+    </div>
+    <div class="inv-divider"></div>
+    <button class="ui-btn" onclick="openNotebook()"><span class="btn-icon">📓</span>수첩</button>
+    <button class="ui-btn" onclick="tryCombo()"><span class="btn-icon">⚗️</span>조합</button>
+  </div>
+</div>
+
+<!-- DIALOG -->
+<div id="dialog-overlay">
+  <div id="dialog-box">
+    <div class="dialog-speaker" id="dialog-speaker"></div>
+    <div class="dialog-text" id="dialog-text"></div>
+    <div class="dialog-continue" id="dialog-continue">[ 클릭하여 계속 ]</div>
+  </div>
+</div>
+
+<!-- INSPECT -->
+<div id="inspect-overlay" onclick="closeInspect()">
+  <div id="inspect-box" onclick="event.stopPropagation()">
+    <button class="inspect-close" onclick="closeInspect()">✕</button>
+    <div class="inspect-icon" id="inspect-icon"></div>
+    <div class="inspect-name" id="inspect-name"></div>
+    <div class="inspect-desc" id="inspect-desc"></div>
+    <div class="inspect-acquire" id="inspect-acquire"></div>
+    <button class="btn-get" id="btn-get" onclick="acquireItem()" style="display:none">획득하기</button>
+  </div>
+</div>
+
+<!-- NOTEBOOK -->
+<div id="notebook-overlay" onclick="closeNotebook()">
+  <div id="notebook-box" onclick="event.stopPropagation()">
+    <button class="nb-close" onclick="closeNotebook()">✕</button>
+    <div class="nb-tabs">
+      <div class="nb-tab active" onclick="switchTab('notes')">메모</div>
+      <div class="nb-tab" onclick="switchTab('map')">지도</div>
+      <div class="nb-tab" onclick="switchTab('items')">아이템</div>
+    </div>
+    <div class="nb-content" id="nb-content">
+      <div class="nb-title">— 수첩 —</div>
+      <div class="nb-empty">아직 기록된 내용이 없다.</div>
+    </div>
+  </div>
+</div>
+
+<!-- COMBO HINT -->
+<div id="combo-hint">
+  <strong>조합 힌트</strong><br>
+  <span id="combo-hint-text"></span>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────
+const state = {
+  inventory: [],
+  notes: [],
+  collected: 0,
+  totalCollectables: 6,
+  currentScene: '',
+  dialogQueue: [],
+  dialogActive: false,
+  inspectItem: null,
+  notebookTab: 'notes',
+  tutorialDone: false,
+  teresaDead: false,
+  evaAppeared: false,
+  ropeAssembled: false,
+  ropeInstalled: false,
+  phase: 'tutorial',
+};
+
+// ─────────────────────────────────────────
+//  ITEMS
+// ─────────────────────────────────────────
+const ITEMS = {
+  necktie1: { id:'necktie1', name:'넥타이 (1)', icon:'👔', desc:'예전에 쓰던 넥타이.\n묶으면 꽤 튼튼할 것 같다.', combo: ['necktie1','necktie2','necktie3'], comboResult: 'rope' },
+  necktie2: { id:'necktie2', name:'넥타이 (2)', icon:'👔', desc:'서랍 안에 있던 넥타이.\n두 개가 됐다.', combo: null },
+  necktie3: { id:'necktie3', name:'넥타이 (3)', icon:'👔', desc:'옷장 구석에서 찾아낸 넥타이.\n세 개면 충분하겠지.', combo: null },
+  rope:     { id:'rope', name:'밧줄', icon:'🪢', desc:'넥타이 세 개를 단단히 엮었다.\n이걸로... 할 수 있겠다.', combo: null },
+  diary:    { id:'diary', name:'일기장', icon:'📔', desc:'내가 써온 일기장.\n아무렇게나 펼쳐진 페이지에 눈이 간다.\n\n"에바만 없었더라면.\n그 애가 태어난 날부터 내 인생은 없었다.\n부모님도, 내 시간도, 내 꿈도 전부.\n그 짐덩어리 하나 때문에 다 사라졌다.\n이제 더는 못 하겠다."', combo: null },
+  phone:    { id:'phone', name:'휴대폰', icon:'📱', desc:'에바에게서 메시지가 와 있다.\n"언니 잘 자~ 내일 봐!" 3일 전.\n...답장을 못 했다.', combo: null },
+};
+
+// ─────────────────────────────────────────
+//  SCENES
+// ─────────────────────────────────────────
+const SCENES = {
+  // ════════════════════════════════
+  //  TERESA PHASE (튜토리얼)
+  // ════════════════════════════════
+  'teresa_room': {
+    label: '테레사의 방',
+    bgClass: 'bg-teresa-room',
+    svgFn: drawTeresaRoom,
+    nav: { forward: 'teresa_hall', left: null, right: 'teresa_desk', back: null },
+    hotspots: [
+      { id:'hs_bed', label:'침대', x:'30%', y:'35%', w:'20%', h:'30%', action:'look', text:'자려고 해도 잠이 안 온다.\n며칠째 이러고 있는 것 같다.', speaker:'테레사' },
+      { id:'hs_window', label:'창문', x:'60%', y:'15%', w:'15%', h:'35%', action:'look', text:'흐린 오후 빛이 들어온다.\n오늘따라 빛이 참 피곤하게 느껴진다.', speaker:'테레사' },
+      { id:'hs_door', label:'방문', x:'78%', y:'20%', w:'12%', h:'55%', action:'look', text:'문은 잠겨 있지 않다.\n잠글 필요도 없겠지.', speaker:'테레사' },
+      { id:'hs_phone_item', label:'휴대폰', x:'13%', y:'52%', w:'10%', h:'10%', action:'item', itemId:'phone' },
+    ]
+  },
+  'teresa_desk': {
+    label: '테레사의 책상',
+    bgClass: 'bg-teresa-desk',
+    svgFn: drawTeresaDesk,
+    nav: { forward: null, left: 'teresa_room', right: null, back: null },
+    hotspots: [
+      { id:'hs_desk_main', label:'책상', x:'20%', y:'30%', w:'60%', h:'50%', action:'look', text:'정리할 마음이 안 생긴다.\n이게 다 무슨 소용인가 싶다.', speaker:'테레사' },
+      { id:'hs_necktie1', label:'넥타이', x:'35%', y:'35%', w:'12%', h:'18%', action:'item', itemId:'necktie1' },
+      { id:'hs_diary', label:'일기장', x:'55%', y:'38%', w:'14%', h:'16%', action:'item', itemId:'diary' },
+    ]
+  },
+  'teresa_hall': {
+    label: '테레사의 집 복도',
+    bgClass: 'bg-teresa-hallway',
+    svgFn: drawTeresaHall,
+    nav: { forward: 'teresa_room2', left: 'teresa_kitchen', right: null, back: 'teresa_room' },
+    hotspots: [
+      { id:'hs_hall_pic', label:'사진', x:'15%', y:'20%', w:'15%', h:'25%', action:'look',
+        text:'에바랑 찍은 사진.\n에바는 이걸 알면 어떻게 생각할까.\n미안해, 에바.', speaker:'테레사' },
+      { id:'hs_drawer', label:'서랍장', x:'65%', y:'40%', w:'20%', h:'35%', action:'multi',
+        dialogs:[
+          {text:'서랍이 삐걱거리며 열린다.', speaker:''},
+          {text:'여기도 있었네. 오래된 넥타이들.', speaker:'테레사'},
+        ],
+        then:'hs_drawer_open'
+      },
+    ]
+  },
+  'teresa_room2': {
+    label: '테레사의 방 (안쪽)',
+    bgClass: 'bg-teresa-room',
+    svgFn: drawTeresaRoom2,
+    nav: { forward: null, left: null, right: null, back: 'teresa_hall' },
+    hotspots: [
+      { id:'hs_closet', label:'옷장', x:'10%', y:'10%', w:'22%', h:'65%', action:'look',
+        text:'오래된 옷들이 걸려 있다.\n이것도 이제 필요 없겠지.', speaker:'테레사' },
+      { id:'hs_necktie2', label:'넥타이', x:'13%', y:'55%', w:'8%', h:'12%', action:'item', itemId:'necktie2' },
+      { id:'hs_wardrobe_bag', label:'가방', x:'65%', y:'45%', w:'18%', h:'30%', action:'look',
+        text:'에바 졸업여행 때 사준 가방.\n한 번도 제대로 여행을 못 데려갔는데.', speaker:'테레사' },
+      { id:'hs_necktie3', label:'넥타이', x:'68%', y:'47%', w:'8%', h:'12%', action:'item', itemId:'necktie3' },
+    ]
+  },
+  'teresa_kitchen': {
+    label: '부엌',
+    bgClass: 'bg-teresa-kitchen',
+    svgFn: drawTeresaKitchen,
+    nav: { forward: null, left: null, right: 'teresa_hall', back: null },
+    hotspots: [
+      { id:'hs_kitchen_sink', label:'싱크대', x:'10%', y:'25%', w:'25%', h:'45%', action:'look',
+        text:'설거지가 쌓여 있다.\n이미 다 상관없는 것들.', speaker:'테레사' },
+      { id:'hs_kitchen_table', label:'식탁', x:'60%', y:'40%', w:'30%', h:'35%', action:'look',
+        text:'에바가 오면 항상 여기 앉아서 밥을 먹었다.\n다음엔 못 앉겠네.', speaker:'테레사' },
+      { id:'hs_ceiling_beam', label:'천장 들보', x:'30%', y:'5%', w:'40%', h:'20%', action:'install_rope' },
+    ]
+  },
+
+  // ════════════════════════════════
+  //  EVA PHASE
+  // ════════════════════════════════
+  'eva_teresa_room': {
+    label: '테레사의 방',
+    bgClass: 'bg-teresa-room',
+    svgFn: drawTeresaRoom,
+    nav: { forward: 'eva_teresa_hall', left: null, right: 'eva_teresa_desk', back: null },
+    hotspots: [
+      { id:'hs_eva_bed', label:'침대', x:'30%', y:'35%', w:'20%', h:'30%', action:'look',
+        text:'언니 침대다. 이불이 아무렇게나 걷혀 있어.\n언니, 어디 있어?', speaker:'에바' },
+      { id:'hs_eva_window', label:'창문', x:'60%', y:'15%', w:'15%', h:'35%', action:'look',
+        text:'커튼이 내려져 있다.\n낮인데 이상하다.', speaker:'에바' },
+      { id:'hs_eva_phone', label:'휴대폰', x:'13%', y:'52%', w:'10%', h:'10%', action:'look',
+        text:'언니 폰이 여기 있어.\n왜 폰을 놔두고 간 거야?', speaker:'에바' },
+    ]
+  },
+  'eva_teresa_desk': {
+    label: '테레사의 책상',
+    bgClass: 'bg-teresa-desk',
+    svgFn: drawTeresaDesk,
+    nav: { forward: null, left: 'eva_teresa_room', right: null, back: null },
+    hotspots: [
+      { id:'hs_eva_desk', label:'책상', x:'20%', y:'30%', w:'60%', h:'50%', action:'look',
+        text:'어질러진 책상.\n일기장이 펼쳐져 있다.', speaker:'에바' },
+      { id:'hs_eva_diary', label:'일기장', x:'55%', y:'38%', w:'14%', h:'16%', action:'multi',
+        dialogs:[
+          {text:'마지막 페이지가 펼쳐져 있다.', speaker:''},
+          {text:'"에바만 없었더라면.\n그 애가 태어난 날부터 내 인생은 없었다.\n그 짐덩어리 하나 때문에 다 사라졌다."', speaker:'일기장'},
+          {text:'...', speaker:'에바'},
+          {text:'언니가... 나를 이렇게 생각했어?', speaker:'에바'},
+          {text:'이게... 이게 진짜야?', speaker:'에바'},
+        ],
+        then: null
+      },
+    ]
+  },
+  'eva_teresa_hall': {
+    label: '테레사의 집 복도',
+    bgClass: 'bg-teresa-hallway',
+    svgFn: drawTeresaHall,
+    nav: { forward: 'eva_teresa_room2', left: 'eva_teresa_kitchen', right: null, back: 'eva_teresa_room' },
+    hotspots: [
+      { id:'hs_eva_pic', label:'사진', x:'15%', y:'20%', w:'15%', h:'25%', action:'look',
+        text:'언니랑 나랑 찍은 사진.\n왜 이렇게 조용해, 언니. 어디 있어.', speaker:'에바' },
+      { id:'hs_eva_drawer', label:'서랍장', x:'65%', y:'40%', w:'20%', h:'35%', action:'look',
+        text:'서랍이 열려 있다.\n뭔가 꺼낸 흔적이 있어.', speaker:'에바' },
+    ]
+  },
+  'eva_teresa_room2': {
+    label: '테레사의 방 (안쪽)',
+    bgClass: 'bg-teresa-room',
+    svgFn: drawTeresaRoom2,
+    nav: { forward: null, left: null, right: null, back: 'eva_teresa_hall' },
+    hotspots: [
+      { id:'hs_eva_closet', label:'옷장', x:'10%', y:'10%', w:'22%', h:'65%', action:'look',
+        text:'옷들이 그대로 걸려 있다.\n언니는 어디 간 거야.', speaker:'에바' },
+      { id:'hs_eva_bag', label:'가방', x:'65%', y:'45%', w:'18%', h:'30%', action:'look',
+        text:'내가 준 가방이다.\n여기 있네. 어디 나간 것도 아니잖아.', speaker:'에바' },
+    ]
+  },
+  'eva_teresa_kitchen': {
+    label: '부엌',
+    bgClass: 'bg-teresa-kitchen',
+    svgFn: drawEvaKitchen,
+    nav: { forward: null, left: null, right: 'eva_teresa_hall', back: null },
+    hotspots: [
+      { id:'hs_eva_discover', label:'...', x:'20%', y:'5%', w:'60%', h:'75%', action:'discover_body' },
+    ]
+  },
+};
+
+// opened drawer flag
+let drawerOpened = false;
+
+// ─────────────────────────────────────────
+//  NARRATIONS
+// ─────────────────────────────────────────
+const narrations = {
+  intro: [
+    '2022년 가을.',
+    '클릭으로 사물을 조사하세요.\n넥타이를 모두 찾아 조합하세요.',
+  ],
+  teresa_dead: [
+    '......',
+    '밧줄이 완성됐다.',
+    '...',
+    '─ 당신이 조작한 캐릭터는\n에바의 언니, 테레사였습니다 ─',
+    '테레사는 동생 졸업여행 중\n스스로 목숨을 끊었습니다.',
+    '플레이어는 그걸 도왔습니다.',
+    '……',
+  ],
+  chapter_switch: [
+    '─ 1년 후 ─',
+    '에바 리슨, 대학교 1학년.',
+    '언니의 죽음 이후, 에바는 달라졌다.\n웃지 않았다. 말하지 않았다.',
+    '그런 에바 앞에 나타난 한 명의 친구.\n그는 자신을 "크리스"라고 소개했다.',
+    '─ 지금부터 에바로 플레이합니다 ─',
+  ],
+};
+
+let currentNarrations = [];
+let narrationIdx = 0;
+let narrationCallback = null;
+
+// ─────────────────────────────────────────
+//  CURSOR
+// ─────────────────────────────────────────
+document.addEventListener('mousemove', e => {
+  const c = document.getElementById('cursor');
+  c.style.left = e.clientX + 'px';
+  c.style.top = e.clientY + 'px';
+});
+
+// ─────────────────────────────────────────
+//  TITLE → GAME
+// ─────────────────────────────────────────
+function startGame() {
+  const title = document.getElementById('title-screen');
+  title.classList.add('fade-out');
+  setTimeout(() => {
+    title.style.display = 'none';
+    showNarration(narrations.intro, () => {
+      document.getElementById('game-screen').classList.add('active');
+      document.getElementById('nav-arrows').style.display = 'block';
+      loadScene('teresa_room');
+    });
+  }, 1600);
+}
+
+// ─────────────────────────────────────────
+//  NARRATION
+// ─────────────────────────────────────────
+function showNarration(lines, cb) {
+  currentNarrations = lines;
+  narrationIdx = 0;
+  narrationCallback = cb;
+  const screen = document.getElementById('narration-screen');
+  screen.classList.add('active');
+  displayNarrationLine();
+}
+
+function displayNarrationLine() {
+  const txt = document.getElementById('narration-text');
+  const cont = document.getElementById('narration-continue');
+  txt.classList.remove('visible');
+  cont.classList.remove('visible');
+  setTimeout(() => {
+    txt.innerHTML = currentNarrations[narrationIdx].replace(/\n/g,'<br>');
+    txt.classList.add('visible');
+    setTimeout(() => cont.classList.add('visible'), 800);
+  }, 400);
+}
+
+function nextNarration() {
+  narrationIdx++;
+  if (narrationIdx >= currentNarrations.length) {
+    const screen = document.getElementById('narration-screen');
+    screen.classList.remove('active');
+    const txt = document.getElementById('narration-text');
+    const cont = document.getElementById('narration-continue');
+    txt.classList.remove('visible');
+    cont.classList.remove('visible');
+    if (narrationCallback) narrationCallback();
+  } else {
+    displayNarrationLine();
+  }
+}
+
+// ─────────────────────────────────────────
+//  SCENE LOADING
+// ─────────────────────────────────────────
+let _sceneTransTimer = null;
+function loadScene(sceneId) {
+  const overlay = document.getElementById('transition-overlay');
+  // 진행 중인 타이머 있으면 취소
+  if (_sceneTransTimer) { clearTimeout(_sceneTransTimer); _sceneTransTimer = null; }
+  overlay.style.transition = 'opacity 0.3s';
+  overlay.style.opacity = '1';
+  overlay.style.pointerEvents = 'all';
+  _sceneTransTimer = setTimeout(() => {
+    _loadScene(sceneId);
+    overlay.style.opacity = '0';
+    overlay.style.pointerEvents = 'none'; // 즉시 해제 - 타이머 없앰
+    _sceneTransTimer = null;
+  }, 320);
+}
+
+function _loadScene(sceneId) {
+  state.currentScene = sceneId;
+  const scene = SCENES[sceneId];
+  if (!scene) return;
+
+  // Background
+  const art = document.getElementById('room-art');
+  art.className = 'scene-bg ' + scene.bgClass;
+
+  // Draw SVG
+  art.innerHTML = '';
+  if (scene.svgFn) {
+    const svg = scene.svgFn();
+    art.appendChild(svg);
+  }
+
+  // Nav arrows
+  const dirs = ['forward','left','right','back'];
+  dirs.forEach(d => {
+    const btn = document.getElementById('nav-' + d);
+    if (scene.nav[d]) btn.classList.remove('hidden');
+    else btn.classList.add('hidden');
+  });
+
+  // Hotspots — nav 버튼 영역(좌우 14%, 하단 22%, 상단 없음) 침범 방지
+  const ro = document.getElementById('room-objects');
+  ro.innerHTML = '';
+  scene.hotspots.forEach(hs => {
+    if (hs.action === 'item' && state.inventory.find(i => i.id === hs.itemId)) return;
+    if (sceneId === 'teresa_hall' && hs.id === 'hs_drawer' && drawerOpened) return;
+
+    const el = document.createElement('div');
+    el.className = 'hotspot';
+    el.id = hs.id;
+
+    if (hs.id === 'hs_ceiling_beam') {
+      el.setAttribute('data-label', state.ropeInstalled ? '올가미 (설치됨)' : (state.ropeAssembled ? '천장 들보 — 설치하기' : '천장 들보'));
+    } else {
+      el.setAttribute('data-label', hs.label);
+    }
+
+    el.style.left = hs.x;
+    el.style.top = hs.y;
+    el.style.width = hs.w;
+    el.style.height = hs.h;
+    el.innerHTML = '<div class="hotspot-inner"></div>';
+    el.onclick = () => handleHotspot(hs);
+    ro.appendChild(el);
+  });
+
+  // Status
+  document.getElementById('status-scene').textContent = scene.label;
+  updateProgress();
+}
+
+// ─────────────────────────────────────────
+//  HOTSPOT ACTIONS
+// ─────────────────────────────────────────
+function handleHotspot(hs) {
+  if (hs.action === 'look') {
+    showDialog(hs.speaker || '', hs.text);
+  } else if (hs.action === 'item') {
+    const item = ITEMS[hs.itemId];
+    showInspect(item, true);
+  } else if (hs.action === 'multi') {
+    showDialogQueue(hs.dialogs, () => {
+      if (hs.then === 'hs_drawer_open') {
+        drawerOpened = true;
+        showToast('서랍이 열렸다');
+        _loadScene(state.currentScene);
+      }
+    });
+  } else if (hs.action === 'install_rope') {
+    if (!state.inventory.find(i => i.id === 'rope') && !state.ropeInstalled) {
+      showDialog('테레사', '여기다 설치하면 될 것 같다.\n근데 아직 준비가 안 됐어.');
+      return;
+    }
+    if (state.ropeInstalled) {
+      triggerTeresaUse();
+      return;
+    }
+    installRope();
+  } else if (hs.action === 'discover_body') {
+    triggerBodyDiscovery();
+  }
+}
+
+// ─────────────────────────────────────────
+//  DIALOG
+// ─────────────────────────────────────────
+function showDialog(speaker, text, cb) {
+  const box = document.getElementById('dialog-box');
+  const sp = document.getElementById('dialog-speaker');
+  const tx = document.getElementById('dialog-text');
+  sp.textContent = speaker ? '[ ' + speaker + ' ]' : '';
+  tx.innerHTML = text.replace(/\n/g, '<br>');
+  box.classList.add('active');
+  state.dialogActive = true;
+  state._dialogCb = cb || null;
+}
+
+function showDialogQueue(queue, cb) {
+  let idx = 0;
+  function next() {
+    if (idx >= queue.length) {
+      const box = document.getElementById('dialog-box');
+      box.classList.remove('active');
+      state.dialogActive = false;
+      if (cb) cb();
+      return;
+    }
+    const q = queue[idx++];
+    showDialog(q.speaker, q.text, null);
+    state._dialogCb = next;
+  }
+  next();
+}
+
+document.getElementById('dialog-box').addEventListener('click', () => {
+  if (!state.dialogActive) return;
+  const box = document.getElementById('dialog-box');
+  const cb = state._dialogCb;
+  state._dialogCb = null;
+  box.classList.remove('active');
+  state.dialogActive = false;
+  if (cb) cb();
+});
+
+// ─────────────────────────────────────────
+//  INSPECT
+// ─────────────────────────────────────────
+let pendingAcquireItem = null;
+
+function showInspect(item, canAcquire) {
+  state.inspectItem = item;
+  pendingAcquireItem = canAcquire ? item : null;
+  document.getElementById('inspect-icon').textContent = item.icon;
+  document.getElementById('inspect-name').textContent = item.name;
+  document.getElementById('inspect-desc').innerHTML = item.desc.replace(/\n/g,'<br>');
+  document.getElementById('inspect-acquire').textContent = canAcquire ? '인벤토리에 추가할 수 있다.' : '';
+  document.getElementById('btn-get').style.display = canAcquire ? 'inline-block' : 'none';
+  document.getElementById('inspect-overlay').classList.add('active');
+}
+
+function closeInspect() {
+  document.getElementById('inspect-overlay').classList.remove('active');
+}
+
+function acquireItem() {
+  if (!pendingAcquireItem) return;
+  const item = pendingAcquireItem;
+  closeInspect();
+
+  if (state.inventory.find(i => i.id === item.id)) {
+    showToast('이미 가지고 있다');
+    return;
+  }
+
+  state.inventory.push(item);
+  state.collected++;
+  updateInventoryUI();
+  updateProgress();
+  _loadScene(state.currentScene);
+  showToast('획득: ' + item.name);
+  addNote(item.name, item.desc.split('\n')[0]);
+
+  // Rope combo check
+  if (['necktie1','necktie2','necktie3'].every(id => state.inventory.find(i=>i.id===id)) && !state.ropeAssembled) {
+    setTimeout(() => showComboHint(), 800);
+  }
+
+  // diary triggers note
+  if (item.id === 'diary') {
+    setTimeout(() => {
+      showDialog('테레사', '이렇게 쓰고 보니까\n내가 참 못된 사람인 것 같기도 하고.\n...그래도 사실이잖아.');
+    }, 600);
+  }
+}
+
+// ─────────────────────────────────────────
+//  COMBO
+// ─────────────────────────────────────────
+function showComboHint() {
+  document.getElementById('combo-hint-text').textContent = '넥타이 3개를 모았다. 조합 버튼으로 밧줄을 만들 수 있다.';
+  const hint = document.getElementById('combo-hint');
+  hint.classList.add('show');
+  setTimeout(() => hint.classList.remove('show'), 5000);
+}
+
+function tryCombo() {
+  const has = (id) => state.inventory.find(i=>i.id===id);
+  if (has('necktie1') && has('necktie2') && has('necktie3') && !state.ropeAssembled) {
+    state.inventory = state.inventory.filter(i => !['necktie1','necktie2','necktie3'].includes(i.id));
+    state.ropeAssembled = true;
+    state.inventory.push(ITEMS.rope);
+    updateInventoryUI();
+    showInspect(ITEMS.rope, false);
+    showToast('조합 성공: 밧줄');
+    // 힌트
+    setTimeout(() => {
+      document.getElementById('combo-hint-text').textContent = '부엌의 천장 들보에 밧줄을 설치할 수 있을 것 같다.';
+      document.getElementById('combo-hint').classList.add('show');
+      setTimeout(() => document.getElementById('combo-hint').classList.remove('show'), 5000);
+    }, 2200);
+  } else {
+    showToast('조합할 수 있는 재료가 없다');
+  }
+}
+
+// ─────────────────────────────────────────
+//  ROPE INSTALL
+// ─────────────────────────────────────────
+function installRope() {
+  showDialogQueue([
+    { speaker:'테레사', text:'...' },
+    { speaker:'테레사', text:'여기다 묶으면 되겠다.' },
+  ], () => {
+    state.inventory = state.inventory.filter(i => i.id !== 'rope');
+    state.ropeInstalled = true;
+    updateInventoryUI();
+    _loadScene('teresa_kitchen');
+    // 잠깐 후 마지막 대화 → 닫으면 바로 암전
+    setTimeout(() => {
+      showDialog('테레사', '......\n이제 됐다.', () => {
+        triggerTeresaUse();
+      });
+    }, 600);
+  });
+}
+
+// ─────────────────────────────────────────
+//  TERESA USES ROPE → EVA
+// ─────────────────────────────────────────
+function triggerTeresaUse() {
+  // 모든 UI 비활성화, 서서히 암전
+  const overlay = document.getElementById('transition-overlay');
+  overlay.style.transition = 'opacity 3s';
+  overlay.style.opacity = '1';
+  overlay.style.pointerEvents = 'all';
+  setTimeout(() => {
+    // 게임화면 숨기고 에바 페이즈로
+    document.getElementById('game-screen').classList.remove('active');
+    state.phase = 'eva';
+    state.inventory = [];
+    updateInventoryUI();
+    overlay.style.transition = 'opacity 0.35s';
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+      overlay.style.pointerEvents = 'none';
+      document.getElementById('game-screen').classList.add('active');
+      loadScene('eva_teresa_room');
+      setTimeout(() => {
+        showDialogQueue([
+          { speaker:'에바', text:'언니? 언니 나야, 에바.\n왜 연락을 안 받아?' },
+          { speaker:'에바', text:'언니 집에 왔어.\n왜 이렇게 조용해...' },
+        ], null);
+      }, 800);
+    }, 400);
+  }, 3200);
+}
+
+// ─────────────────────────────────────────
+//  BODY DISCOVERY
+// ─────────────────────────────────────────
+function triggerBodyDiscovery() {
+  showDialogQueue([
+    { speaker:'', text:'...' },
+    { speaker:'에바', text:'언니?' },
+    { speaker:'에바', text:'언니!!!!' },
+    { speaker:'에바', text:'언니, 언니... 제발.\n안 돼, 안 돼, 안 돼!!!!' },
+    { speaker:'에바', text:'누가 좀 도와줘요!!!!!\n언니 죽지마, 제발 죽지마!!!' },
+    { speaker:'에바', text:'......' },
+  ], () => {
+    // 천천히 암전
+    const overlay = document.getElementById('transition-overlay');
+    overlay.style.transition = 'opacity 4s';
+    overlay.style.opacity = '1';
+    overlay.style.pointerEvents = 'all';
+    // 끝
+  });
+}
+
+// ─────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────
+function navigate(dir) {
+  const scene = SCENES[state.currentScene];
+  const target = scene?.nav[dir];
+  if (target) loadScene(target);
+}
+
+// ─────────────────────────────────────────
+//  NOTEBOOK
+// ─────────────────────────────────────────
+function openNotebook() {
+  document.getElementById('notebook-overlay').classList.add('active');
+  renderNotebook();
+}
+function closeNotebook() {
+  document.getElementById('notebook-overlay').classList.remove('active');
+}
+function switchTab(tab) {
+  state.notebookTab = tab;
+  document.querySelectorAll('.nb-tab').forEach((el,i) => {
+    el.classList.toggle('active', ['notes','map','items'][i] === tab);
+  });
+  renderNotebook();
+}
+function addNote(title, text) {
+  if (!state.notes.find(n => n.title === title)) {
+    state.notes.push({ title, text });
+  }
+}
+function renderNotebook() {
+  const c = document.getElementById('nb-content');
+  const tab = state.notebookTab;
+  if (tab === 'notes') {
+    if (state.notes.length === 0) {
+      c.innerHTML = '<div class="nb-title">— 메모 —</div><div class="nb-empty">아직 기록이 없다.</div>';
+    } else {
+      c.innerHTML = '<div class="nb-title">— 메모 —</div>' +
+        state.notes.map(n => `<div class="nb-entry"><div class="nb-entry-title">${n.title}</div><div class="nb-entry-text">${n.text.replace(/\n/g,'<br>')}</div></div>`).join('');
+    }
+  } else if (tab === 'map') {
+    c.innerHTML = `<div class="nb-title">— 지도 —</div>
+    <div style="padding:16px;border:1px solid rgba(184,149,74,0.15);font-size:11px;letter-spacing:0.1em;color:rgba(232,224,208,0.5);line-height:2.2">
+      ${state.phase === 'tutorial' ? `
+      <div style="color:var(--gold)">테레사의 집</div>
+      <div>📍 테레사의 방 ${state.currentScene==='teresa_room'?'← 현재':''}</div>
+      <div>   └ 복도 ${state.currentScene==='teresa_hall'?'← 현재':''}</div>
+      <div>   └ 책상 앞 ${state.currentScene==='teresa_desk'?'← 현재':''}</div>
+      <div>   └ 방 안쪽 ${state.currentScene==='teresa_room2'?'← 현재':''}</div>
+      ` : `
+      <div style="color:var(--gold)">에바의 집</div>
+      <div>📍 거실 ← 현재</div>
+      <div style="margin-top:12px;color:rgba(184,149,74,0.4)">에덴 요양병원으로 가야 할 것 같다...</div>
+      `}
+      <div style="margin-top:16px;font-size:10px;color:rgba(184,149,74,0.3)">수집률: ${Math.round(state.collected/state.totalCollectables*100)}%</div>
+    </div>`;
+  } else {
+    if (state.inventory.length === 0) {
+      c.innerHTML = '<div class="nb-title">— 소지품 —</div><div class="nb-empty">아무것도 없다.</div>';
+    } else {
+      c.innerHTML = '<div class="nb-title">— 소지품 —</div>' +
+        state.inventory.map(i =>
+          `<div class="nb-entry"><div class="nb-entry-title">${i.icon} ${i.name}</div><div class="nb-entry-text">${i.desc.replace(/\n/g,'<br>')}</div></div>`
+        ).join('');
+    }
+  }
+}
+
+// ─────────────────────────────────────────
+//  UI UPDATES
+// ─────────────────────────────────────────
+function updateInventoryUI() {
+  for (let i = 0; i < 4; i++) {
+    const slot = document.getElementById('slot-' + i);
+    const icon = document.getElementById('slot-' + i + '-icon');
+    const name = document.getElementById('slot-' + i + '-name');
+    const item = state.inventory[i];
+    if (item) {
+      icon.textContent = item.icon;
+      name.textContent = item.name.length > 6 ? item.name.slice(0,6)+'…' : item.name;
+      slot.classList.add('has-item');
+    } else {
+      icon.textContent = '·';
+      name.textContent = '';
+      slot.classList.remove('has-item');
+    }
+  }
+}
+
+function inspectSlot(i) {
+  const item = state.inventory[i];
+  if (item) showInspect(item, false);
+}
+
+function updateProgress() {
+  const pct = Math.round(state.collected / state.totalCollectables * 100);
+  document.getElementById('status-collect').textContent = '수집률 ' + pct + '%';
+  document.getElementById('collect-fill').style.width = pct + '%';
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─────────────────────────────────────────
+//  SVG ROOM DRAWINGS
+// ─────────────────────────────────────────
+function makeSVG(w=1000, h=600) {
+  const s = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  s.setAttribute('width','100%');
+  s.setAttribute('height','100%');
+  s.setAttribute('preserveAspectRatio','xMidYMid slice');
+  return s;
+}
+
+function drawTeresaRoom() {
+  const s = makeSVG();
+  s.innerHTML = `
+    <defs>
+      <linearGradient id="wall" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#2a1c0c"/>
+        <stop offset="100%" stop-color="#1a1008"/>
+      </linearGradient>
+      <linearGradient id="floor" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#1a1208"/>
+        <stop offset="100%" stop-color="#0d0906"/>
+      </linearGradient>
+      <linearGradient id="windowLight" x1="0" x2="1" y1="0" y2="1">
+        <stop offset="0%" stop-color="#d4a44c" stop-opacity="0.12"/>
+        <stop offset="100%" stop-color="#d4a44c" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <!-- Room -->
+    <rect width="1000" height="600" fill="url(#wall)"/>
+    <!-- Floor -->
+    <polygon points="0,420 1000,380 1000,600 0,600" fill="url(#floor)"/>
+    <!-- Ceiling line -->
+    <line x1="0" y1="100" x2="1000" y2="100" stroke="#3d2a14" stroke-width="1" opacity="0.5"/>
+    <!-- Wall boards -->
+    <line x1="0" y1="200" x2="1000" y2="200" stroke="#2d1e0e" stroke-width="0.5" opacity="0.4"/>
+    <line x1="0" y1="300" x2="1000" y2="300" stroke="#2d1e0e" stroke-width="0.5" opacity="0.3"/>
+
+    <!-- Window (left) -->
+    <rect x="580" y="110" width="140" height="200" fill="url(#windowLight)" rx="2"/>
+    <rect x="580" y="110" width="140" height="200" fill="none" stroke="#6b4c1e" stroke-width="2"/>
+    <line x1="650" y1="110" x2="650" y2="310" stroke="#6b4c1e" stroke-width="1.5"/>
+    <line x1="580" y1="210" x2="720" y2="210" stroke="#6b4c1e" stroke-width="1.5"/>
+    <!-- Curtain -->
+    <path d="M580,110 Q570,160 575,210 Q572,260 580,310" fill="#3d2818" stroke="#2d1e0e" stroke-width="1"/>
+    <path d="M720,110 Q730,160 725,210 Q728,260 720,310" fill="#3d2818" stroke="#2d1e0e" stroke-width="1"/>
+
+    <!-- Bed (left) -->
+    <rect x="260" y="290" width="220" height="140" fill="#2a1a0a" rx="4"/>
+    <rect x="255" y="280" width="230" height="50" fill="#3d2010" rx="4"/>
+    <rect x="270" y="295" width="200" height="120" fill="#1e1408" rx="2"/>
+    <!-- Pillow -->
+    <rect x="285" y="300" width="90" height="55" fill="#2d1e0e" rx="8"/>
+    <!-- Blanket -->
+    <path d="M270,360 Q350,350 460,370 L460,415 L270,415Z" fill="#241808"/>
+    <!-- Phone on bed -->
+    <rect x="140" y="340" width="50" height="85" fill="#111" rx="6" stroke="#333" stroke-width="1"/>
+    <rect x="147" y="350" width="36" height="64" fill="#1a1a2e" rx="3"/>
+    <circle cx="165" cy="420" r="4" fill="#333"/>
+
+    <!-- Door (right) -->
+    <rect x="790" y="110" width="100" height="290" fill="#2d1a0a" rx="2"/>
+    <rect x="800" y="120" width="80" height="260" fill="#271508" rx="2"/>
+    <line x1="840" y1="120" x2="840" y2="380" stroke="#3d2010" stroke-width="1" opacity="0.6"/>
+    <line x1="800" y1="250" x2="880" y2="250" stroke="#3d2010" stroke-width="1" opacity="0.6"/>
+    <circle cx="860" cy="252" r="6" fill="#6b4c1e"/>
+    <!-- Door frame -->
+    <rect x="787" y="107" width="106" height="296" fill="none" stroke="#3d2010" stroke-width="3"/>
+
+    <!-- Floor details -->
+    <line x1="0" y1="430" x2="1000" y2="390" stroke="#2d1e0e" stroke-width="0.5" opacity="0.5"/>
+    <line x1="0" y1="480" x2="1000" y2="440" stroke="#2d1e0e" stroke-width="0.5" opacity="0.3"/>
+    <line x1="0" y1="530" x2="1000" y2="490" stroke="#2d1e0e" stroke-width="0.5" opacity="0.2"/>
+
+    <!-- Dust particles -->
+    <circle cx="200" cy="150" r="1.5" fill="#b8954a" opacity="0.3"/>
+    <circle cx="500" cy="180" r="1" fill="#b8954a" opacity="0.2"/>
+    <circle cx="700" cy="130" r="1.5" fill="#b8954a" opacity="0.25"/>
+  `;
+  return s;
+}
+
+function drawTeresaDesk() {
+  const s = makeSVG();
+  s.innerHTML = `
+    <defs>
+      <linearGradient id="wall2" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#221508"/>
+        <stop offset="100%" stop-color="#1a1008"/>
+      </linearGradient>
+    </defs>
+    <rect width="1000" height="600" fill="url(#wall2)"/>
+    <polygon points="0,430 1000,390 1000,600 0,600" fill="#0d0906"/>
+
+    <!-- Desk -->
+    <rect x="150" y="280" width="700" height="180" fill="#2d1a08" rx="4"/>
+    <rect x="150" y="280" width="700" height="15" fill="#3d2410" rx="4"/>
+    <!-- Desk legs -->
+    <rect x="170" y="460" width="25" height="120" fill="#241408"/>
+    <rect x="805" y="460" width="25" height="120" fill="#241408"/>
+
+    <!-- Books -->
+    <rect x="200" y="200" width="20" height="80" fill="#1e4d2e" rx="1"/>
+    <rect x="222" y="210" width="18" height="70" fill="#4d1e1e" rx="1"/>
+    <rect x="242" y="205" width="22" height="75" fill="#1e2d4d" rx="1"/>
+    <rect x="266" y="215" width="15" height="65" fill="#3d2d0a" rx="1"/>
+
+    <!-- Necktie on desk (hotspot area) -->
+    <path d="M380,295 Q390,310 385,340 Q380,360 385,375" stroke="#8b4513" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <path d="M385,340 Q380,365 385,375 Q390,380 395,372 Q390,360 385,340Z" fill="#8b4513"/>
+
+    <!-- Diary -->
+    <rect x="500" y="290" width="90" height="110" fill="#2d1e0a" rx="3" stroke="#4d3010" stroke-width="1"/>
+    <line x1="510" y1="310" x2="580" y2="310" stroke="#3d2a10" stroke-width="1" opacity="0.6"/>
+    <line x1="510" y1="325" x2="580" y2="325" stroke="#3d2a10" stroke-width="1" opacity="0.6"/>
+    <line x1="510" y1="340" x2="580" y2="340" stroke="#3d2a10" stroke-width="1" opacity="0.6"/>
+    <line x1="510" y1="355" x2="575" y2="355" stroke="#3d2a10" stroke-width="1" opacity="0.4"/>
+
+    <!-- Papers -->
+    <rect x="620" y="285" width="120" height="150" fill="#e8e0c8" rx="2" opacity="0.08"/>
+    <rect x="630" y="295" width="110" height="130" fill="#e8e0c8" rx="1" opacity="0.06"/>
+
+    <!-- Lamp -->
+    <line x1="780" y1="280" x2="780" y2="180" stroke="#4d3010" stroke-width="4"/>
+    <path d="M760,180 Q780,150 800,180Z" fill="#6b4c1e"/>
+    <ellipse cx="780" cy="178" rx="25" ry="8" fill="#b8954a" opacity="0.15"/>
+  `;
+  return s;
+}
+
+function drawTeresaHall() {
+  const s = makeSVG();
+  s.innerHTML = `
+    <defs>
+      <linearGradient id="hall" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#1a1208"/>
+        <stop offset="100%" stop-color="#0d0906"/>
+      </linearGradient>
+      <radialGradient id="hallLight" cx="50%" cy="0%" r="80%">
+        <stop offset="0%" stop-color="#d4a44c" stop-opacity="0.06"/>
+        <stop offset="100%" stop-color="#d4a44c" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="1000" height="600" fill="url(#hall)"/>
+    <rect width="1000" height="600" fill="url(#hallLight)"/>
+    <!-- Perspective walls -->
+    <polygon points="350,150 650,150 750,600 250,600" fill="#1e1408" opacity="0.3"/>
+    <!-- Floor -->
+    <polygon points="0,480 1000,440 1000,600 0,600" fill="#0a0806"/>
+    <!-- Ceiling -->
+    <polygon points="0,0 1000,0 1000,100 0,100" fill="#111008"/>
+    <!-- Wainscot -->
+    <rect x="0" y="380" width="1000" height="4" fill="#2d1e0e" opacity="0.5"/>
+    <!-- Wall panels -->
+    <rect x="50" y="120" width="3" height="260" fill="#2d1e0e" opacity="0.4"/>
+    <rect x="950" y="120" width="3" height="260" fill="#2d1e0e" opacity="0.4"/>
+
+    <!-- Photo frame (left) -->
+    <rect x="80" y="140" width="120" height="160" fill="#1a1008" stroke="#4d3010" stroke-width="3" rx="2"/>
+    <rect x="90" y="150" width="100" height="140" fill="#2a1a10" rx="1"/>
+    <!-- Two figures in photo -->
+    <circle cx="120" cy="185" r="15" fill="#3d2818"/>
+    <rect x="108" y="200" width="24" height="60" fill="#3d2818" rx="3"/>
+    <circle cx="158" cy="190" r="12" fill="#2d1e10"/>
+    <rect x="148" y="203" width="20" height="55" fill="#2d1e10" rx="3"/>
+
+    <!-- Dresser (right) -->
+    <rect x="700" y="310" width="200" height="180" fill="#2d1a08" rx="4"/>
+    <rect x="700" y="310" width="200" height="15" fill="#3d2410" rx="2"/>
+    <line x1="800" y1="325" x2="800" y2="490" stroke="#241408" stroke-width="2"/>
+    <!-- Drawer handles -->
+    <circle cx="760" cy="380" r="5" fill="#6b4c1e"/>
+    <circle cx="840" cy="380" r="5" fill="#6b4c1e"/>
+    <circle cx="760" cy="440" r="5" fill="#6b4c1e"/>
+    <circle cx="840" cy="440" r="5" fill="#6b4c1e"/>
+
+    <!-- End of hallway hint -->
+    <rect x="430" y="160" width="140" height="200" fill="#0d0906" opacity="0.5" rx="2"/>
+    <rect x="433" y="163" width="134" height="194" fill="none" stroke="#2d1e0e" stroke-width="1"/>
+  `;
+  return s;
+}
+
+function drawTeresaRoom2() {
+  const s = makeSVG();
+  s.innerHTML = `
+    <defs>
+      <linearGradient id="wall3" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#1a1208"/>
+        <stop offset="100%" stop-color="#0f0c06"/>
+      </linearGradient>
+    </defs>
+    <rect width="1000" height="600" fill="url(#wall3)"/>
+    <polygon points="0,400 1000,360 1000,600 0,600" fill="#0a0806"/>
+
+    <!-- Wardrobe (left) -->
+    <rect x="50" y="60" width="230" height="430" fill="#241808" rx="3" stroke="#3d2010" stroke-width="2"/>
+    <line x1="165" y1="75" x2="165" y2="475" stroke="#1e1408" stroke-width="2"/>
+    <!-- Wardrobe top -->
+    <rect x="45" y="50" width="240" height="18" fill="#2d1808" rx="2"/>
+    <!-- Clothes hanging -->
+    <line x1="100" y1="90" x2="100" y2="350" stroke="#1a1008" stroke-width="14" opacity="0.7" stroke-linecap="round"/>
+    <line x1="130" y1="90" x2="130" y2="320" stroke="#2a1808" stroke-width="12" opacity="0.7" stroke-linecap="round"/>
+    <line x1="88" y1="88" x2="112" y2="88" stroke="#6b4c1e" stroke-width="3" stroke-linecap="round"/>
+    <line x1="118" y1="88" x2="142" y2="88" stroke="#6b4c1e" stroke-width="3" stroke-linecap="round"/>
+    <!-- Necktie in wardrobe -->
+    <path d="M180,100 Q190,120 185,160 Q180,185 185,200" stroke="#c0392b" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <path d="M185,160 Q180,190 185,200 Q190,206 195,198Z" fill="#c0392b"/>
+    <!-- Wardrobe handles -->
+    <circle cx="140" cy="280" r="5" fill="#6b4c1e"/>
+    <circle cx="190" cy="280" r="5" fill="#6b4c1e"/>
+
+    <!-- Travel bag (right) -->
+    <rect x="620" y="340" width="220" height="160" fill="#1e2030" rx="8" stroke="#2d3050" stroke-width="2"/>
+    <rect x="660" y="320" width="140" height="30" fill="#1a1c2a" rx="4"/>
+    <line x1="620" y1="390" x2="840" y2="390" stroke="#2d3050" stroke-width="1.5" opacity="0.5"/>
+    <!-- Bag details -->
+    <circle cx="730" cy="420" r="12" fill="#2d3050"/>
+    <rect x="720" y="416" width="20" height="8" fill="#1e2030" rx="2"/>
+
+    <!-- Third necktie near bag -->
+    <path d="M700,350 Q710,360 706,380" stroke="#8b1a1a" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M706,370 Q703,382 706,388 Q709,391 712,386Z" fill="#8b1a1a"/>
+
+    <!-- Small table -->
+    <rect x="400" y="380" width="160" height="120" fill="#1e1408" rx="3"/>
+    <rect x="400" y="374" width="160" height="12" fill="#2d1e08" rx="2"/>
+    <!-- Candle on table -->
+    <rect x="470" y="330" width="12" height="50" fill="#e8e0c8" rx="2"/>
+    <path d="M476,325 Q478,318 480,325 Q478,330 476,325Z" fill="#f0a020" opacity="0.8"/>
+  `;
+  return s;
+}
+
+function drawEvaHome() {
+  const s = makeSVG();
+  s.innerHTML = `
+    <defs>
+      <linearGradient id="evawall" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#0f1520"/>
+        <stop offset="100%" stop-color="#0a0f18"/>
+      </linearGradient>
+    </defs>
+    <rect width="1000" height="600" fill="url(#evawall)"/>
+    <polygon points="0,440 1000,400 1000,600 0,600" fill="#080c12"/>
+    <rect x="350" y="80" width="300" height="280" fill="#050810" rx="2" stroke="#1e2840" stroke-width="2"/>
+    <line x1="500" y1="82" x2="500" y2="358" stroke="#1e2840" stroke-width="2"/>
+    <line x1="352" y1="220" x2="648" y2="220" stroke="#1e2840" stroke-width="2"/>
+    <circle cx="400" cy="130" r="1" fill="#e8e8ff" opacity="0.6"/>
+    <circle cx="450" cy="100" r="1.5" fill="#e8e8ff" opacity="0.8"/>
+    <circle cx="560" cy="140" r="1" fill="#e8e8ff" opacity="0.5"/>
+    <rect x="420" y="280" width="90" height="175" fill="#0d1018" rx="3" stroke="#1e2540" stroke-width="1"/>
+    <rect x="425" y="300" width="80" height="140" fill="#1a2030" rx="2" opacity="0.3"/>
+    <rect x="720" y="360" width="180" height="130" fill="#1a1c28" rx="6" stroke="#252838" stroke-width="1.5"/>
+  `;
+  return s;
+}
+
+function drawEvaKitchen() {
+  const s = makeSVG();
+  s.innerHTML = `
+    <defs>
+      <linearGradient id="kitchenWall2" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#1c1408"/>
+        <stop offset="100%" stop-color="#130e06"/>
+      </linearGradient>
+    </defs>
+    <rect width="1000" height="600" fill="url(#kitchenWall2)"/>
+    <polygon points="0,450 1000,410 1000,600 0,600" fill="#0e0904"/>
+    <line x1="0" y1="300" x2="1000" y2="300" stroke="#241808" stroke-width="0.8" opacity="0.4"/>
+    <line x1="250" y1="0" x2="250" y2="450" stroke="#241808" stroke-width="0.8" opacity="0.25"/>
+    <line x1="750" y1="0" x2="750" y2="450" stroke="#241808" stroke-width="0.8" opacity="0.25"/>
+
+    <!-- 천장 들보 -->
+    <rect x="200" y="0" width="600" height="35" fill="#2d1a08" rx="2"/>
+
+    <!-- 싱크대 -->
+    <rect x="30" y="280" width="280" height="180" fill="#1e1208" rx="3" stroke="#2d1a08" stroke-width="2"/>
+    <rect x="30" y="280" width="280" height="18" fill="#2d1a08" rx="2"/>
+    <rect x="60" y="298" width="220" height="90" fill="#130e06" rx="4"/>
+
+    <!-- 식탁 -->
+    <rect x="620" y="340" width="320" height="12" fill="#2d1a08" rx="2"/>
+    <rect x="640" y="352" width="8" height="120" fill="#241408"/>
+    <rect x="900" y="352" width="8" height="120" fill="#241408"/>
+
+    <!-- 창문 -->
+    <rect x="820" y="100" width="120" height="160" fill="#0a0c10" rx="2" stroke="#1e1808" stroke-width="2"/>
+    <line x1="880" y1="102" x2="880" y2="258" stroke="#1e1808" stroke-width="1.5"/>
+    <line x1="822" y1="180" x2="938" y2="180" stroke="#1e1808" stroke-width="1.5"/>
+
+    <!-- 밧줄 -->
+    <line x1="500" y1="32" x2="500" y2="130" stroke="#4d2e10" stroke-width="7" stroke-linecap="round"/>
+    <!-- 올가미 -->
+    <ellipse cx="500" cy="148" rx="50" ry="22" fill="none" stroke="#4d2e10" stroke-width="6"/>
+
+    <!-- 어두운 인체 실루엣 - 발만 살짝 보이게 -->
+    <rect x="483" y="168" width="15" height="160" fill="#0a0806" rx="3" opacity="0.92"/>
+    <rect x="502" y="168" width="15" height="160" fill="#0a0806" rx="3" opacity="0.92"/>
+    <!-- 몸통 실루엣 -->
+    <rect x="468" y="130" width="64" height="155" fill="#0c0906" rx="8" opacity="0.9"/>
+    <!-- 머리 -->
+    <ellipse cx="500" cy="125" rx="24" ry="24" fill="#0c0906" opacity="0.9"/>
+
+    <!-- 두꺼운 어둠 오버레이 - 자세히 안 보이게 -->
+    <rect width="1000" height="600" fill="rgba(0,0,0,0.45)"/>
+
+    <!-- 아주 희미한 빛 - 창문 방향 -->
+    <radialGradient id="coldLight" cx="85%" cy="30%" r="40%">
+      <stop offset="0%" stop-color="#a0b0c0" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <rect width="1000" height="600" fill="url(#coldLight)"/>
+  `;
+  return s;
+}
+
+function drawTeresaKitchen() {
+  const s = makeSVG();
+  const ns = 'http://www.w3.org/2000/svg';
+  s.innerHTML = `
+    <defs>
+      <linearGradient id="kWall" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%" stop-color="#1c1408"/>
+        <stop offset="100%" stop-color="#130e06"/>
+      </linearGradient>
+    </defs>
+    <rect width="1000" height="600" fill="url(#kWall)"/>
+    <polygon points="0,450 1000,410 1000,600 0,600" fill="#0e0904"/>
+    <line x1="0" y1="300" x2="1000" y2="300" stroke="#241808" stroke-width="0.8" opacity="0.4"/>
+    <line x1="250" y1="0" x2="250" y2="450" stroke="#241808" stroke-width="0.8" opacity="0.25"/>
+    <line x1="500" y1="0" x2="500" y2="450" stroke="#241808" stroke-width="0.8" opacity="0.25"/>
+    <line x1="750" y1="0" x2="750" y2="450" stroke="#241808" stroke-width="0.8" opacity="0.25"/>
+    <rect x="200" y="0" width="600" height="35" fill="#2d1a08" rx="2"/>
+    <rect x="210" y="35" width="580" height="8" fill="#1a0e04" opacity="0.5"/>
+    <rect x="30" y="280" width="280" height="180" fill="#1e1208" rx="3" stroke="#2d1a08" stroke-width="2"/>
+    <rect x="30" y="280" width="280" height="18" fill="#2d1a08" rx="2"/>
+    <rect x="60" y="298" width="220" height="90" fill="#130e06" rx="4"/>
+    <rect x="155" y="270" width="8" height="30" fill="#3d2810"/>
+    <rect x="148" y="270" width="22" height="8" fill="#3d2810" rx="2"/>
+    <ellipse cx="100" cy="350" rx="35" ry="10" fill="#1a1208" stroke="#2d1a08" stroke-width="1"/>
+    <ellipse cx="100" cy="340" rx="32" ry="9" fill="#1e1408"/>
+    <ellipse cx="100" cy="331" rx="28" ry="8" fill="#221608"/>
+    <rect x="620" y="340" width="320" height="12" fill="#2d1a08" rx="2"/>
+    <rect x="640" y="352" width="8" height="120" fill="#241408"/>
+    <rect x="900" y="352" width="8" height="120" fill="#241408"/>
+    <rect x="680" y="400" width="70" height="60" fill="#1a1008" rx="3"/>
+    <rect x="680" y="395" width="70" height="10" fill="#241408" rx="2"/>
+    <rect x="820" y="100" width="120" height="160" fill="#0a0c10" rx="2" stroke="#1e1808" stroke-width="2"/>
+    <line x1="880" y1="102" x2="880" y2="258" stroke="#1e1808" stroke-width="1.5"/>
+    <line x1="822" y1="180" x2="938" y2="180" stroke="#1e1808" stroke-width="1.5"/>
+    <rect id="k-overlay" width="1000" height="600" fill="rgba(0,0,0,0.15)"/>
+  `;
+  if (state.ropeInstalled) {
+    const g = document.createElementNS(ns, 'g');
+    g.innerHTML = '<line x1="440" y1="35" x2="440" y2="200" stroke="#5d3a18" stroke-width="5" stroke-linecap="round"/>'
+      + '<line x1="440" y1="35" x2="560" y2="35" stroke="#5d3a18" stroke-width="6"/>'
+      + '<line x1="560" y1="35" x2="560" y2="200" stroke="#5d3a18" stroke-width="5" stroke-linecap="round"/>'
+      + '<ellipse cx="500" cy="220" rx="65" ry="30" fill="none" stroke="#5d3a18" stroke-width="5"/>'
+      + '<line x1="440" y1="200" x2="435" y2="250" stroke="#5d3a18" stroke-width="4"/>'
+      + '<line x1="560" y1="200" x2="565" y2="250" stroke="#5d3a18" stroke-width="4"/>'
+      + '<path d="M435,250 Q500,270 565,250" fill="none" stroke="#5d3a18" stroke-width="5" stroke-linecap="round"/>';
+    const ov = s.getElementById('k-overlay');
+    s.insertBefore(g, ov);
+  }
+  return s;
+}
+
+</script>
+</body>
+</html>
