@@ -817,11 +817,11 @@ const state = {
 //  ITEMS
 // ─────────────────────────────────────────
 const ITEMS = {
-  necktie1: { id:'necktie1', name:'넥타이 (1)', icon:'👔', desc:'예전에 쓰던 넥타이.\n묶으면 꽤 튼튼할 것 같다.', combo: ['necktie1','necktie2','necktie3'], comboResult: 'rope' },
-  necktie2: { id:'necktie2', name:'넥타이 (2)', icon:'👔', desc:'서랍 안에 있던 넥타이.\n두 개가 됐다.', combo: null },
-  necktie3: { id:'necktie3', name:'넥타이 (3)', icon:'👔', desc:'옷장 구석에서 찾아낸 넥타이.\n세 개면 충분하겠지.', combo: null },
-  rope:     { id:'rope', name:'밧줄', icon:'🪢', desc:'넥타이 세 개를 단단히 엮었다.\n이걸로... 할 수 있겠다.', combo: null },
-  diary:    { id:'diary', name:'일기장', icon:'📔', desc:'내가 써온 일기장.\n아무렇게나 펼쳐진 페이지에 눈이 간다.\n\n"에바만 없었더라면.\n그 애가 태어난 날부터 내 인생은 없었다.\n부모님도, 내 시간도, 내 꿈도 전부.\n그 짐덩어리 하나 때문에 다 사라졌다.\n이제 더는 못 하겠다."', combo: null },
+  necktie1: { id:'necktie1', name:'넥타이 (1)', icon:'👔', desc:'예전에 쓰던 넥타이.\n오래됐지만 멀쩡하다.', combo: ['necktie1','necktie2','necktie3'], comboResult: 'rope' },
+  necktie2: { id:'necktie2', name:'넥타이 (2)', icon:'👔', desc:'서랍 안에 있던 넥타이.\n안 쓰는 것들이 쌓여 있었다.', combo: null },
+  necktie3: { id:'necktie3', name:'넥타이 (3)', icon:'👔', desc:'옷장 구석에서 찾아낸 넥타이.\n이것도 오래된 것이다.', combo: null },
+  rope:     { id:'rope', name:'밧줄', icon:'🪢', desc:'넥타이 세 개를 단단히 엮었다.\n꽤 길고 튼튼하게 됐다.', combo: null },
+  diary:    { id:'diary', name:'일기장', icon:'📔', desc:'내가 써온 일기장.\n오래 써서 낡았다.', combo: null },
   phone:    { id:'phone', name:'휴대폰', icon:'📱', desc:'에바에게서 메시지가 와 있다.\n"언니 잘 자~ 내일 봐!" 3일 전.\n...답장을 못 했다.', combo: null },
 };
 
@@ -840,7 +840,7 @@ const SCENES = {
     hotspots: [
       { id:'hs_bed', label:'침대', x:'30%', y:'35%', w:'20%', h:'30%', action:'look', text:'자려고 해도 잠이 안 온다.\n며칠째 이러고 있는 것 같다.', speaker:'테레사' },
       { id:'hs_window', label:'창문', x:'60%', y:'15%', w:'15%', h:'35%', action:'look', text:'흐린 오후 빛이 들어온다.\n오늘따라 빛이 참 피곤하게 느껴진다.', speaker:'테레사' },
-      { id:'hs_door', label:'방문', x:'78%', y:'20%', w:'12%', h:'55%', action:'look', text:'문은 잠겨 있지 않다.\n잠글 필요도 없겠지.', speaker:'테레사' },
+      { id:'hs_door', label:'방문', x:'78%', y:'20%', w:'12%', h:'55%', action:'look', text:'문은 잠겨 있지 않다.\n그냥 열어두는 편이다.', speaker:'테레사' },
       { id:'hs_phone_item', label:'휴대폰', x:'13%', y:'52%', w:'10%', h:'10%', action:'item', itemId:'phone' },
     ]
   },
@@ -850,7 +850,7 @@ const SCENES = {
     svgFn: drawTeresaDesk,
     nav: { forward: null, left: 'teresa_room', right: null, back: null },
     hotspots: [
-      { id:'hs_desk_main', label:'책상', x:'20%', y:'30%', w:'60%', h:'50%', action:'look', text:'정리할 마음이 안 생긴다.\n이게 다 무슨 소용인가 싶다.', speaker:'테레사' },
+      { id:'hs_desk_main', label:'책상', x:'20%', y:'30%', w:'60%', h:'50%', action:'look', text:'정리할 마음이 안 생긴다.\n며칠째 그대로다.', speaker:'테레사' },
       { id:'hs_necktie1', label:'넥타이', x:'35%', y:'35%', w:'12%', h:'18%', action:'item', itemId:'necktie1' },
       { id:'hs_diary', label:'일기장', x:'55%', y:'38%', w:'14%', h:'16%', action:'item', itemId:'diary' },
     ]
@@ -879,7 +879,7 @@ const SCENES = {
     nav: { forward: null, left: null, right: null, back: 'teresa_hall' },
     hotspots: [
       { id:'hs_closet', label:'옷장', x:'10%', y:'10%', w:'22%', h:'65%', action:'look',
-        text:'오래된 옷들이 걸려 있다.\n이것도 이제 필요 없겠지.', speaker:'테레사' },
+        text:'오래된 옷들이 걸려 있다.\n입지 않은 것들이 많다.', speaker:'테레사' },
       { id:'hs_necktie2', label:'넥타이', x:'13%', y:'55%', w:'8%', h:'12%', action:'item', itemId:'necktie2' },
       { id:'hs_wardrobe_bag', label:'가방', x:'65%', y:'45%', w:'18%', h:'30%', action:'look',
         text:'에바 졸업여행 때 사준 가방.\n한 번도 제대로 여행을 못 데려갔는데.', speaker:'테레사' },
@@ -1124,7 +1124,7 @@ function _loadScene(sceneId) {
     el.id = hs.id;
 
     if (hs.id === 'hs_ceiling_beam') {
-      el.setAttribute('data-label', state.ropeInstalled ? '올가미 (설치됨)' : (state.ropeAssembled ? '천장 들보 — 설치하기' : '천장 들보'));
+      el.setAttribute('data-label', state.ropeInstalled ? '올가미 (설치됨)' : (state.ropeAssembled ? '천장 들보' : '천장 들보'));
     } else {
       el.setAttribute('data-label', hs.label);
     }
@@ -1162,7 +1162,7 @@ function handleHotspot(hs) {
     });
   } else if (hs.action === 'install_rope') {
     if (!state.inventory.find(i => i.id === 'rope') && !state.ropeInstalled) {
-      showDialog('테레사', '여기다 설치하면 될 것 같다.\n근데 아직 준비가 안 됐어.');
+      showDialog('테레사', '뭔가 걸 수 있을 것 같다.\n아직은 아니지만.');
       return;
     }
     if (state.ropeInstalled) {
@@ -1262,7 +1262,7 @@ function acquireItem() {
   // diary triggers note
   if (item.id === 'diary') {
     setTimeout(() => {
-      showDialog('테레사', '이렇게 쓰고 보니까\n내가 참 못된 사람인 것 같기도 하고.\n...그래도 사실이잖아.');
+      showDialog('테레사', '오늘 하루도 그냥 지나갔다.\n별로 남긴 것도 없는 것 같다.');
     }, 600);
   }
 }
@@ -1271,7 +1271,7 @@ function acquireItem() {
 //  COMBO
 // ─────────────────────────────────────────
 function showComboHint() {
-  document.getElementById('combo-hint-text').textContent = '넥타이 3개를 모았다. 조합 버튼으로 밧줄을 만들 수 있다.';
+  document.getElementById('combo-hint-text').textContent = '넥타이 3개를 모았다. 조합 버튼으로 묶을 수 있다.';
   const hint = document.getElementById('combo-hint');
   hint.classList.add('show');
   setTimeout(() => hint.classList.remove('show'), 5000);
@@ -1288,7 +1288,7 @@ function tryCombo() {
     showToast('조합 성공: 밧줄');
     // 힌트
     setTimeout(() => {
-      document.getElementById('combo-hint-text').textContent = '부엌의 천장 들보에 밧줄을 설치할 수 있을 것 같다.';
+      document.getElementById('combo-hint-text').textContent = '부엌 천장 들보에 뭔가 걸 수 있을 것 같다.';
       document.getElementById('combo-hint').classList.add('show');
       setTimeout(() => document.getElementById('combo-hint').classList.remove('show'), 5000);
     }, 2200);
@@ -1303,7 +1303,7 @@ function tryCombo() {
 function installRope() {
   showDialogQueue([
     { speaker:'테레사', text:'...' },
-    { speaker:'테레사', text:'여기다 묶으면 되겠다.' },
+    { speaker:'테레사', text:'여기다 걸면 되겠다.' },
   ], () => {
     state.inventory = state.inventory.filter(i => i.id !== 'rope');
     state.ropeInstalled = true;
@@ -1311,7 +1311,7 @@ function installRope() {
     _loadScene('teresa_kitchen');
     // 잠깐 후 마지막 대화 → 닫으면 바로 암전
     setTimeout(() => {
-      showDialog('테레사', '......\n이제 됐다.', () => {
+      showDialog('테레사', '......', () => {
         triggerTeresaUse();
       });
     }, 600);
